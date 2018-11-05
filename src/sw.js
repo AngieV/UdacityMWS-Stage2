@@ -1,3 +1,4 @@
+import idb from "idb";
 
 let cacheID = "mws_rrdb";
 
@@ -15,13 +16,33 @@ const urlsToCache = [ '/',
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(cacheID).then(cache => {
-        console.log(`Opened ${cacheID} cache`);
+      console.log(`Opened ${cacheID} cache`);
         return cache.addAll(urlsToCache)
     .catch(error => {
       console.log("Caches open failed: " + error);
     });
   }));
 });
+
+// ================ OPEN DATABASE ===================
+
+const dbPromise = idb.open("rest_reviews_db", 2, upgradeDb => {
+  switch(upgradeDb.oldVersion) {
+    // Note: don't use 'break' in this switch statement,
+    // the fall-through behaviour is what we want.
+    case 0: 
+      { // executes when the database is first created
+          upgradeDb.createObjectStore('restaurants', {keyPath: 'id'});
+      }
+    case 1: 
+      {
+      //createObectstore (method) returns a promise for the database,
+      //containing objectStore 'restaurants' which uses id as its key
+      const storeReviews = upgradeDb.createObjectStore('reviews', {keyPath: 'id'}); 
+      storeReviews.createIndex("restaurant_id", "restaurant_id");
+      }
+    } //end switch
+  })
 
 // ================ LISTEN FOR REQUEST ===================
 

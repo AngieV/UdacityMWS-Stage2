@@ -1,4 +1,6 @@
-import dbPromise from './dbpromise';
+
+let fetchedNeighborhoods;
+let fetchedCuisines;
 
 /**
  * Common database helper functions.
@@ -23,32 +25,71 @@ export default class DBHelper {
   }
 
   /**
-   * Fetch all restaurants. fetch
+   * Fetch all restaurants.
    */
   static fetchRestaurants(callback) {
     fetch(`${DBHelper.API_URL}/restaurants`)
     .then(response => {
-    if (response.status === 200) {
       response.json()
     .then(restaurants => {
       console.log('restaurants.JSON: ', restaurants);
-      dbPromise.putRestaurants(restaurants);
-      callback(null, restaurants);
-      });
-    } 
-  })
-    .catch(error => { // Oops!. Got an error from server.
-      callback(`Request failed. Returned ${error}`, null);
-      dbPromise.getRestaurants().then(idbRestaurants => {
-          // if we get back more than 1 restaurant from idb, return idbRestaurants
-          if (idbRestaurants.length > 0) {
-            callback(null, idbRestaurants)
-          } else { // if we got back 0 restaurants return an error
-            callback('No restaurants found in idb', null);
+      if (restaurants.length) {
+            // Get all neighborhoods from all restaurants
+            const neighborhoods = restaurants.map((v, i) => restaurants[i].neighborhood);
+            // Remove duplicates from neighborhoods
+            fetchedNeighborhoods = neighborhoods.filter((v, i) => neighborhoods.indexOf(v) == i);
+
+            // Get all cuisines from all restaurants
+            const cuisines = restaurants.map((v, i) => restaurants[i].cuisine_type);
+            // Remove duplicates from cuisines
+            fetchedCuisines = cuisines.filter((v, i) => cuisines.indexOf(v) == i);
           }
-        });
+        callback(null, restaurants);
+      });
+  }).catch(error => { // Oops!. Got an error from server.
+      if (response.status != 200) {
+        const error = (`Request failed. Returned ${error}`);
+      }
+      callback(error, null);
       });
     }
+
+  /**
+   * Save a restaurant or array of restaurants into idb, using promises.
+   */
+   //lines 62-78 by Alexandro Perez
+  static putRestaurants(restaurants) {
+    if (!restaurants.push) restaurants = [restaurants];
+    return this.db.then(db => {
+      const store = db.transaction('restaurants', 'readwrite').objectStore('restaurants');
+      return Promise.all(restaurants.map(networkRestaurant => {
+        //checks if to see if fetched restaurant is already in the idb and if so
+        // whether the idb info or the fetched info is more current.
+        //if not in idb, or if updated, the restaurant is added/stored
+        return store.get(networkRestaurant.id).then(idbRestaurant => {
+          if (!idbRestaurant || networkRestaurant.updatedAt > idbRestaurant.updatedAt) {
+            return store.put(networkRestaurant);  
+          } 
+        });
+      })).then(function () {
+        return store.complete;
+      });
+    });
+  }
+
+  /**
+   * Get a restaurant, by its id, or all stored restaurants in idb using promises.
+   * If no argument is passed, all restaurants will returned.
+   */
+   static getRestaurants(id = undefined) {
+    return this.db.then(db => {
+      const store = db.transaction('restaurants').objectStore('restaurants');
+      if (id){
+       return store.get(Number(id));
+      }
+      return store.getAll();
+    });
+  }
 
   /**
    * Fetch a restaurant by its ID.
@@ -62,12 +103,12 @@ export default class DBHelper {
       return response.json();
     }).then(fetchedRestaurant => {
       // if restaurant could be fetched from network:
-      dbPromise.putRestaurants(fetchedRestaurant);
+      //DBHelper.putRestaurants(fetchedRestaurant);
       return callback(null, fetchedRestaurant);
     }).catch(networkError => {
       // if restaurant couldn't be fetched from network:
       console.log(`${networkError}, trying idb.`);
-      dbPromise.getRestaurants(id).then(idbRestaurant => {
+      DBHelper.getRestaurants(id).then(idbRestaurant => {
         if (!idbRestaurant) 
           return callback("Restaurant not found in idb either", null);
         return callback(null, idbRestaurant);
