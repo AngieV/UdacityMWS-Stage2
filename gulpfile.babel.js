@@ -54,21 +54,20 @@ gulp.task('responsive:images', function() {
   return gulp.src(paths.responsive.src)
     .pipe(responsive({
       // Here is where you can change sizes and suffixes to fit your needs. Right now 
-      // we are resizing all jpg images to three different sizes: 300, 600 and 800 px wide.
-
       //resize all images t0 300, 600 and 800
+      
       '**/*.jpg':[{
         width: 800,
         quality: 70,
-        rename: { suffix: '_lg.jpg 800w'}
+        rename: { suffix: '_lg'}
         }, {
         width: 600,
         quality: 50,
-        rename: { suffix: '_md.jpg 600w'}
+        rename: { suffix: '_md'}
         }, {
-        width: 300,
+        width: 290,
         quality: 40,
-        rename: { suffix: '_sm.jpg 300w'}
+        rename: { suffix: '_sm'}
       }]
     },))
     .pipe(gulp.dest(paths.responsive.dest));

@@ -1,16 +1,15 @@
 import idb from "idb";
 
-let cacheID = "mws_rrdb";
+let cacheID = "mws_rrdb" + "-v 1.2";
 
-const urlsToCache = [ '/',
-                   '/index.html',
-                   '/restaurant.html',
-                   '/css/styles.css',
-                   '/js/dbhelper.js',
-                   '/js/main.js',
-                   '/js/register.js',
-                   '/js/restaurant_info.js',
-                   '/img/',
+let urlsToCache = [ './',
+                   './index.html',
+                   './restaurant.html',
+                   './css/styles.css',
+                   './js/main.js',
+                   './js/restaurant_info.js',
+                   './icons/*.*',
+                   './manifest.json'
                  ];
 
 // ============ INSTALL SERVICEWORKER ===============
@@ -18,7 +17,7 @@ const urlsToCache = [ '/',
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(cacheID).then(cache => {
-        console.log(`Opened ${cacheID} cache`);
+      console.log(`Opened ${cacheID} cache`);
         return cache.addAll(urlsToCache)
     .catch(error => {
       console.log("Caches open failed: " + error);
@@ -28,21 +27,23 @@ self.addEventListener('install', event => {
 
 // ================ OPEN DATABASE ===================
 
-const dbPromise = idb.open( "rest_reviews_db", 1, upgradeDb => {
+const dbPromise = idb.open("rest_reviews_db", 2, upgradeDb => {
   switch(upgradeDb.oldVersion) {
-    // Note: we don't use 'break' in this switch statement,
+    // Note: don't use 'break' in this switch statement,
     // the fall-through behaviour is what we want.
-    case 0:// executes when the database is first created
-      upgradeDb.createObjectStore('restaurants', {keypath: 'id'});
-    case 1:
+    case 0: 
+      { // executes when the database is first created
+          upgradeDb.createObjectStore('restaurants', {keyPath: 'id'});
+      }
+    case 1: 
+      {
       //createObectstore (method) returns a promise for the database,
       //containing objectStore 'restaurants' which uses id as its key
-      const storeReviews = upgradeDb.createObjectStore('reviews', {keypath: 'id'}); 
+      const storeReviews = upgradeDb.createObjectStore('reviews', {keyPath: 'id'}); 
       storeReviews.createIndex("restaurant_id", "restaurant_id");
-  } //end switch
-}); //end DBPromise 
-
-
+      }
+    } //end switch
+  })
 
 // ================ LISTEN FOR REQUEST ===================
 
@@ -53,9 +54,8 @@ self.addEventListener('fetch', event => {
     const RestaurantCacheURL = "restaurant.html";
     requestCache = new Request(RestaurantCacheURL);
   }
-
-// lines 61-69 ~ Doug Brown
 // Requests to the API are handled separately from others
+// lines 39-47 ~ Doug Brown
   const checkURL = new URL(event.request.url);
   if(checkURL.port == "1337") { // === "1337"  ??
       const parts = checkURL.pathname.split("/");
@@ -90,7 +90,7 @@ self.addEventListener('fetch', event => {
       let store = tx.objectStore("restaurants");
       return store.get('id'); // D Brown: return db.transaction("restaurants").objectStore("restaurants").get("id");
     }).then(data => {
-      //lines 97-99  ~D Brown
+      //lines 73-75  ~D Brown
         return ( (data && data.data) || fetch(event.request)
           .then(fetchResponse => fetchResponse.json())
           .then(json => { 

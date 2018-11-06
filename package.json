@@ -1,10 +1,6 @@
 {
-  "name": "responsive-images",
+  "name": "restaurant-reviews-project",
   "version": "0.1.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/angieV/Udacity-MobileWebDev.git"
-  },
   "private": true,
   "scripts": {
     "start": "gulp sync"
@@ -30,5 +26,8 @@
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0",
     "watchify": "^3.11.0"
+  },
+  "dependencies": {
+    "idb": "^2.1.3"
   }
 }
