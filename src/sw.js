@@ -1,14 +1,15 @@
 import idb from "idb";
 
-let cacheID = "mws_rrdb";
+let cacheID = "mws_rrdb" + "-v 1.2";
 
-const urlsToCache = [ '/',
-                   '/index.html',
-                   '/restaurant.html',
-                   '/css/styles.css',
-                   '/js/main.js',
-                   '/js/restaurant_info.js',
-                   '/img/'
+let urlsToCache = [ './',
+                   './index.html',
+                   './restaurant.html',
+                   './css/styles.css',
+                   './js/main.js',
+                   './js/restaurant_info.js',
+                   './icons/*.*',
+                   './manifest.json'
                  ];
 
 // ============ INSTALL SERVICEWORKER ===============
