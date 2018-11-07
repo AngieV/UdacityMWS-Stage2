@@ -44,21 +44,29 @@ export default class DBHelper {
             // Remove duplicates from cuisines
             fetchedCuisines = cuisines.filter((v, i) => cuisines.indexOf(v) == i);
           }
+          //DBHelper.putRestaurants(restaurants);
         callback(null, restaurants);
       });
   }).catch(error => { // Oops!. Got an error from server.
       if (response.status != 200) {
-        const error = (`Request failed. Returned ${error}`);
+        callback (`Request failed. Returned status of ${error.status}.`, null);
+        /*DBHelper.getRestaurants().then(idbRestaurants => {
+          // if we get back more than 1 restaurant from idb, return idbRestaurants
+          if (idbRestaurants.length > 0) {
+            callback(null, idbRestaurants)
+          } else { // if we got back 0 restaurants return an error
+            callback('No restaurants found in idb', null);
+          }
+        });*/
       }
-      callback(error, null);
-      });
-    }
+    });
+  }
 
   /**
    * Save a restaurant or array of restaurants into idb, using promises.
    */
    //lines 62-78 by Alexandro Perez
-  static putRestaurants(restaurants) {
+/*  static putRestaurants(restaurants) {
     if (!restaurants.push) restaurants = [restaurants];
     return this.db.then(db => {
       const store = db.transaction('restaurants', 'readwrite').objectStore('restaurants');
@@ -89,7 +97,7 @@ export default class DBHelper {
       }
       return store.getAll();
     });
-  }
+  }*/
 
   /**
    * Fetch a restaurant by its ID.
