@@ -2,14 +2,13 @@ import idb from "idb";
 
 let cacheID = "mws_rrdb" + "-v 1.2";
 
-let urlsToCache = [ './',
-                   './index.html',
-                   './restaurant.html',
-                   './css/styles.css',
-                   './js/main.js',
-                   './js/restaurant_info.js',
-                   './icons/*.*',
-                   './manifest.json'
+let urlsToCache = [ '/',
+                   '/index.html',
+                   '/restaurant.html',
+                   '/css/styles.css',
+                   '/js/main.js',
+                   '/js/restaurant_info.js',
+                   '/manifest.json'
                  ];
 
 // ============ INSTALL SERVICEWORKER ===============
@@ -57,7 +56,7 @@ self.addEventListener('fetch', event => {
 // Requests to the API are handled separately from others
 // lines 39-47 ~ Doug Brown
   const checkURL = new URL(event.request.url);
-  if(checkURL.port == "1337") { // === "1337"  ??
+  if(checkURL.port == 1337) { // === "1337"  ??
       const parts = checkURL.pathname.split("/");
       let id = checkURL.searchParams.get("restaurant_id") - 0;
       if(!id) {
@@ -127,13 +126,17 @@ self.addEventListener('fetch', event => {
           // can only be consumed once. Since we are consuming this
           // once by cache and once by the browser for fetch, we need
           // to clone the response.
+          console.log("doing fetch since not in cache");
           const fetchRequest = event.request.clone();
-          fetch(fetchRequest).then(fetchResponse => {
+          return fetch(fetchRequest).then(fetchResponse => {
             //Check if we received a valid response
-            if(!fetchResponse || fetchResponse.status !== 200 || fetchResponse.type !== 'basic') {
-              return new Response("No internet connection", { status: 404, statusText: "No internet connection"});
+            if(!fetchResponse || fetchResponse.status !== 200) {
+              return new Response("No internet connection", { 
+                status: 404, 
+                statusText: "No internet connection"
+              });
             } else {
-              return caches.open(cacheID),then(cache => {
+              return caches.open(cacheID).then(cache => {
                 if (fetchResponse.url.indexOf("restaurants.html") === -1) {
                   // IMPORTANT: Clone the response
                   const cacheResponse = fetchResponse.clone()
@@ -146,6 +149,11 @@ self.addEventListener('fetch', event => {
             // handle lack of jpg
             if (event.request.url.indexOf(".jpg") >= 0) {
                 return caches.match("/img/na.png");
+              } else {
+                return new Response("Item not found", {
+                status: 404,
+                statusText: error
+                });
               }
             }) //end catch
         }  //end else
