@@ -110,7 +110,7 @@ const updateRestaurants = () => {
       console.error(error);
     } else {
       resetRestaurants(restaurants);
-      fillRestaurantsHTML(restaurants);
+      fillRestaurantsHTML();
     }
   })
 }

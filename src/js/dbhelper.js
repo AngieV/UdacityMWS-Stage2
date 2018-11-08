@@ -50,38 +50,7 @@ export default class DBHelper {
   }).catch(error => { // Oops!. Got an error from server.
       if (response.status != 200) {
         callback (`Request failed. Returned status of ${error.status}.`, null);
-        /*DBHelper.getRestaurants().then(idbRestaurants => {
-          // if we get back more than 1 restaurant from idb, return idbRestaurants
-          if (idbRestaurants.length > 0) {
-            callback(null, idbRestaurants)
-          } else { // if we got back 0 restaurants return an error
-            callback('No restaurants found in idb', null);
-          }
-        });*/
       }
-    });
-  }
-
-  /**
-   * Save a restaurant or array of restaurants into idb, using promises.
-   */
-   //lines 62-78 by Alexandro Perez
-/*  static putRestaurants(restaurants) {
-    if (!restaurants.push) restaurants = [restaurants];
-    return this.db.then(db => {
-      const store = db.transaction('restaurants', 'readwrite').objectStore('restaurants');
-      return Promise.all(restaurants.map(networkRestaurant => {
-        //checks if to see if fetched restaurant is already in the idb and if so
-        // whether the idb info or the fetched info is more current.
-        //if not in idb, or if updated, the restaurant is added/stored
-        return store.get(networkRestaurant.id).then(idbRestaurant => {
-          if (!idbRestaurant || networkRestaurant.updatedAt > idbRestaurant.updatedAt) {
-            return store.put(networkRestaurant);  
-          } 
-        });
-      })).then(function () {
-        return store.complete;
-      });
     });
   }
 
@@ -97,12 +66,12 @@ export default class DBHelper {
       }
       return store.getAll();
     });
-  }*/
+  }
 
   /**
    * Fetch a restaurant by its ID.
    */
-  // lines 47-58 by Alexandro Perez
+  // lines 78-94 by Alexandro Perez
   static fetchRestaurantById(id, callback) {
     fetch(`${DBHelper.API_URL}/restaurants/${id}`)
       .then(response => {
@@ -242,15 +211,5 @@ export default class DBHelper {
       marker.addTo(map);
     return marker;
   }
-  /* static mapMarkerForRestaurant(restaurant, map) {
-    const marker = new google.maps.Marker({
-      position: restaurant.latlng,
-      title: restaurant.name,
-      url: DBHelper.urlForRestaurant(restaurant),
-      map: map,
-      animation: google.maps.Animation.DROP}
-    );
-    return marker;
-  } */
 
 }
