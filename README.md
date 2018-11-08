@@ -13,4 +13,6 @@ add an empty folder 'dist'
 
 Run 'npm install' from the terminal to load project dependencies
 
-Run 'gulp sync' to have BrowserSync serve the app on localhost:8000
+Run npm install idb to install IndexedDB Promised
+
+Run 'gulp sync' to have BrowserSync serve the app on localhost:8000 or other available port.
