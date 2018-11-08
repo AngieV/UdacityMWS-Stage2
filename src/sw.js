@@ -90,13 +90,12 @@ self.addEventListener('fetch', event => {
       let store = tx.objectStore("restaurants");
       return store.get('id'); // D Brown: return db.transaction("restaurants").objectStore("restaurants").get("id");
     }).then(data => {
-      console.log("sw got data");
       //lines 73-75  ~D Brown
         return ( (data && data.data) || fetch(event.request)
           .then(fetchResponse => fetchResponse.json())
-          .then(json => { 
+          .then(json => {
             console.log("sw got json");
-            //save the JSOn data to the IDB
+            //save the JSON data to the IDB
             return dbPromise.then(db => {
               let tx = db.transaction("restaurants", "readwrite");
               let store = tx.objectStore('restaurants').put({
@@ -104,66 +103,62 @@ self.addEventListener('fetch', event => {
                 data: json
               });
               console.log("sw put data in db: ", json);
-                  return json; //return tx.complete; ??
+              return json;
             }); // dbPromise.then(db => {
           }) // .then(json => {
         ); // return ( (data && ...
       }) //fulfills then(data => {... })
       .then(finalresponse => {
-        console.log("sw returning json: ", finalResponse);
         return new Response (JSON.stringify(finalResponse));
       })
       .catch(error => {
-        console.log("sw had error: ", error);
         return new Response("Error fetching data: ", { status: 500 });
       })
     ) //fulfill Promise : event.respondWith(dbPromise.then(db => {
   } // end
 
-  function readDatabase_AJAX(event, id) {
-    // Only use caching for GET events
-    if (event.request.method !== "GET") {
-      return fetch(event.request)
-        .then(fetchResponse => fetchResponse.json())
-        .then(json => {
-          return json
-        });
-    }
-    // Check IndexedDB for JSON, return if available; 
-    event.respondWith(dbPromise.then(db => {
-      console.log("sw got dbPromise");
-      //create a transaction and pass objectStore(s)
-      let tx = db.transaction("restaurants"); //transaction is a property
-      // call objectStore and pass the name of the objectStore
-      let store = tx.objectStore("restaurants");
-      return store.get('id'); // D Brown: return db.transaction("restaurants").objectStore("restaurants").get("id");
-    }).then(data => {
-      console.log("sw got data");
-      //lines 73-75  ~D Brown
-        return ( (data && data.data) || fetch(event.request)
-          .then(fetchResponse => fetchResponse.json())
-          .then(json => { 
-            console.log("sw got json");
-            //save the JSOn data to the IDB
-            return dbPromise.then(db => {
-              let tx = db.transaction("restaurants", "readwrite");
-              let store = tx.objectStore('restaurants').put({
-                id: id,
-                data: json
+    function handleRequest(event, requestCache) {
+    // Check for previously cached html-if available, return;
+    // If not available, fetch, cache & return the request
+    event.respondWith(
+      caches.match(requestCache).then(response => { 
+        if (response) {
+          return response;
+        } else {
+          // IMPORTANT: Clone the request. A request is a stream and
+          // can only be consumed once. Since we are consuming this
+          // once by cache and once by the browser for fetch, we need
+          // to clone the response.
+          console.log("doing fetch since not in cache");
+          const fetchRequest = event.request.clone();
+          return fetch(fetchRequest).then(fetchResponse => {
+            //Check if we received a valid response
+            if(!fetchResponse || fetchResponse.status !== 200) {
+              return new Response("No internet connection", { 
+                status: 404, 
+                statusText: "No internet connection"
               });
-              console.log("sw put data in db: ", json);
-              return json; //return tx.complete; ??
-            }); // dbPromise.then(db => {
-          }) // .then(json => {
-        ); // return ( (data && ...
-      }) //fulfills then(data => {... })
-      .then(finalResponse => {
-        console.log("sw returning json: ", finalResponse);
-        return new Response (JSON.stringify(finalResponse));
-      })
-      .catch(error => {
-        console.log("sw had error: ", error);
-        return new Response("Error fetching data: ", { status: 500, statusText: error });
-      })
-    ) //fulfill Promise : event.respondWith(dbPromise.then(db => {
-  } // end handleReq
+            } else {
+              return caches.open(cacheID).then(cache => {
+                if (fetchResponse.url.indexOf("restaurants.html") === -1) {
+                  // IMPORTANT: Clone the response
+                  const cacheResponse = fetchResponse.clone()
+                  cache.put(event.request, cacheResponse);
+              }
+              return fetchResponse;
+            });
+            }
+          }).catch(error => {
+            // handle lack of jpg
+            if (event.request.url.indexOf(".jpg") >= 0) {
+                return caches.match("/img/na.png");
+              } else {
+                return new Response("Item not found", {
+                status: 404,
+                statusText: error
+                });
+              }
+            }) //end catch
+        }  //end else
+      })); //end respond with...
+    } //end handleReq
