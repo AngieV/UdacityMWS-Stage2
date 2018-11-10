@@ -18,4 +18,6 @@ Once you have the server dependencies installed and the API server is started, d
 
 4. In the terminal run 'gulp sync' to  have BrowserSync serve the app on localhost:8000 or other available port.
  
-5. With your server running, visit the site: `http://localhost:8000` (or other available port) and explore the app.
+5. With your server running, visit the site: `http://localhost:8000` (or other available port*) and explore the app.
+
+*Runs on 8001 on my environment
